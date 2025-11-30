@@ -4,58 +4,49 @@ import { ResumeData } from './types';
 export const INITIAL_DATA: ResumeData = {
   template: 'modern',
   personalInfo: {
-    fullName: 'JONATHAN DOE',
-    role: 'SENIOR PRODUCT DESIGNER',
-    email: 'hello@jonathandoe.com',
-    phone: '+1 123 456 7890',
-    linkedin: 'linkedin.com/in/jondoe',
-    location: 'San Francisco, CA',
-    summary: 'Creative and detail-oriented Product Designer with over 6 years of experience in building user-centric digital products. Passionate about solving complex problems through elegant design solutions. Proven track record of leading design teams and delivering high-impact projects.',
+    fullName: 'IDIABY IBRAHIM',
+    role: 'FULL STACK DEVELOPER',
+    email: 'ibkhalidworld@gmail.com',
+    phone: '+224 613 12 34 56',
+    linkedin: 'linkedin.com/in/idiabyibrahim',
+    location: 'Conakry, Guinea',
+    summary: 'Full Stack Developer with over 6 years of experience in building user-centric digital products. Passionate about solving complex problems through elegant design solutions. Proven track record of leading design teams and delivering high-impact projects.',
     photoUrl: 'https://picsum.photos/200/200',
   },
   experiences: [
     {
       id: '1',
-      company: 'Tech Solutions Inc.',
+      company: 'Freelance',
       title: 'Lead Product Designer',
-      location: 'San Francisco, CA',
+      location: 'Conakry, Guinea',
       startDate: '2020',
       endDate: 'Present',
-      description: '• Spearheaded the redesign of the core platform, increasing user engagement by 40%.\n• Mentored a team of 4 junior designers.\n• Collaborated closely with engineering and product managers to define roadmap.',
-    },
-    {
-      id: '2',
-      company: 'Creative Agency',
-      title: 'UI/UX Designer',
-      location: 'New York, NY',
-      startDate: '2017',
-      endDate: '2020',
-      description: '• Designed responsive websites for over 20 clients in fintech and healthcare.\n• Conducted user research and usability testing to iterate on designs.',
-    },
+      description: '• Spearheaded the redesign of the core platform, increasing user engagement by 40%.\n• Mentored a team of 4 junior designers.\n• Collaborated closely with engineering and product managers to define roadmap. • Spearheaded the redesign of the core platform, increasing user engagement by 40%.\n• Mentored a team of 4 junior designers.\n• Collaborated closely with engineering and product managers to define roadmap.',
+    }, 
   ],
   education: [
     {
       id: '1',
-      school: 'University of Design',
-      degree: 'Bachelor of Fine Arts in Interaction Design',
-      startDate: '2013',
-      endDate: '2017',
+      school: 'MIT',
+      degree: 'Bachelor of Science in Computer Science',
+      startDate: '2018',
+      endDate: '2022',
     },
   ],
-  skills: ['Figma', 'Adobe CC', 'Prototyping', 'HTML/CSS', 'User Research', 'Agile'],
+  skills: ['React', 'Node.js', 'MongoDB', 'Express', 'HTML/CSS', 'JavaScript', 'Python'],
   languages: [
     { id: '1', language: 'English', proficiency: 5 },
-    { id: '2', language: 'Spanish', proficiency: 4 },
-    { id: '3', language: 'French', proficiency: 2 },
+    { id: '2', language: 'French', proficiency: 3 },
+    { id: '3', language: 'Arabic', proficiency: 2 },
   ],
   achievements: [
     {
       id: '1',
-      title: 'Best Design Award 2021',
-      description: 'Awarded by the Global Design Association for innovation in accessibility.',
+      title: 'Best Full Stack Developer Award 2025',
+      description: 'Awarded by the Global Full Stack Developer Association for innovation in web development.',
     },
   ],
-  courses: ['Advanced Prototyping (Udemy)', 'Leadership for Designers'],
+  courses: ['Advanced React (Udemy)', 'Advanced Node.js (Udemy)', 'Advanced MongoDB (Udemy)', 'Advanced Express (Udemy)'],
   interests: ['Photography', 'Traveling', 'Hiking', 'Cooking'],
   sectionOrder: [
     'experience',
@@ -67,19 +58,19 @@ export const INITIAL_DATA: ResumeData = {
     'interests'
   ],
   coverLetter: {
-    recipientName: 'Hiring Manager',
+    recipientName: 'IDIABY IBRAHIM  ',
     companyName: 'Acme Corp',
-    jobTitle: 'Senior Product Designer',
-    body: `Dear Hiring Manager,
+    jobTitle: 'Full Stack Developer',
+    body: `Dear IDIABY IBRAHIM,
 
-I am writing to express my strong interest in the Senior Product Designer position at Acme Corp. With over 6 years of experience in product design and a proven track record of leading design teams to deliver high-impact digital products, I am confident in my ability to contribute to your team's success.
+I am writing to express my strong interest in the Full Stack Developer position at Acme Corp. With over 6 years of experience in web development and a proven track record of leading development teams to deliver high-impact digital products, I am confident in my ability to contribute to your team's success.
 
-Throughout my career, I have honed my skills in user research, prototyping, and UI/UX design. At Tech Solutions Inc., I spearheaded a platform redesign that resulted in a 40% increase in user engagement. I am passionate about creating elegant, user-centric solutions that solve complex business problems.
+Throughout my career, I have honed my skills in web development, backend development, and database management. At Tech Solutions Inc., I spearheaded a platform redesign that resulted in a 40% increase in user engagement. I am passionate about creating elegant, user-centric solutions that solve complex business problems.
 
-I admire Acme Corp's commitment to innovation and would welcome the opportunity to bring my expertise and leadership to your design team. Thank you for considering my application. I look forward to the possibility of discussing how my skills align with your needs.
+I admire Acme Corp's commitment to innovation and would welcome the opportunity to bring my expertise and leadership to your development team. Thank you for considering my application. I look forward to the possibility of discussing how my skills align with your needs.
 
 Sincerely,
-Jonathan Doe`
+IDIABY IBRAHIM`
   }
 };
 
