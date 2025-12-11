@@ -1,10 +1,12 @@
 
 import React, { useState, useRef } from 'react';
 import { ResumeData, Experience, Education, LanguageItem, Achievement, Language } from '../types';
-import { Plus, Trash2, Wand2, ChevronDown, ChevronUp, Upload, GripVertical, LayoutTemplate, Sparkles, FileText, User } from 'lucide-react';
+import { Plus, Trash2, Wand2, ChevronDown, ChevronUp, Upload, GripVertical, LayoutTemplate, Sparkles, FileText, User, Palette, Lock, CreditCard } from 'lucide-react';
 import { generateSummary, improveDescription, generateCoverLetter } from '../services/geminiService';
-import { TRANSLATIONS } from '../constants';
+import { updateCredit } from '../services/authService';
+import { DEFAULT_THEME, TRANSLATIONS } from '../constants';
 import ImageCropper from './ImageCropper';
+import { AuthUser } from './AuthModal';
 
 interface EditorProps {
   data: ResumeData;
@@ -12,12 +14,60 @@ interface EditorProps {
   lang: Language;
   activeView: 'resume' | 'cover-letter';
   setActiveView: (view: 'resume' | 'cover-letter') => void;
+  user: AuthUser | null;
+  hasPro: boolean;
+  onUpgrade: () => void;
+  onCreditsUpdate?: (newCredits: number) => void;
 }
 
-const Editor: React.FC<EditorProps> = ({ data, onChange, lang, activeView, setActiveView }) => {
+const Editor: React.FC<EditorProps> = ({ data, onChange, lang, activeView, setActiveView, user, hasPro, onUpgrade, onCreditsUpdate }) => {
+  const userCredits = user?.credits || 0;
+  // AI features require 1 credit
+  const aiCreditsRequired = 1;
+  const hasCredits = userCredits >= aiCreditsRequired;
+
+  // Deduct credits only after successful AI operation
+  const deductCreditAfterSuccess = async () => {
+    // AI features cost 1 credit
+    const aiCreditsRequired = 1;
+    if (!user || userCredits < aiCreditsRequired) return false;
+    
+    // Validate user has an ID
+    if (!user.id || user.id.trim() === '') {
+      console.error('User ID is missing or empty');
+      return false;
+    }
+    
+    const remainingCredits = userCredits - aiCreditsRequired;
+    const updated = { ...user, credits: remainingCredits };
+    localStorage.setItem('tp-auth-user', JSON.stringify(updated));
+    if (onCreditsUpdate) {
+      onCreditsUpdate(remainingCredits);
+    }
+    
+    // Update credit on server (send remaining balance)
+    try {
+      console.log('Calling updateCredit with:', { userId: user.id, remainingCredits, userIdType: typeof user.id });
+      const creditResult = await updateCredit(user.id, remainingCredits);
+      if (creditResult.success && creditResult.balance !== undefined) {
+        // Sync with server balance
+        const synced = { ...updated, credits: creditResult.balance };
+        localStorage.setItem('tp-auth-user', JSON.stringify(synced));
+        if (onCreditsUpdate) {
+          onCreditsUpdate(creditResult.balance);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to update credit on server:', error);
+      // Continue with local update even if API call fails
+    }
+    
+    return true;
+  };
   const [activeSection, setActiveSection] = useState<string | null>('personal');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const theme = data.theme || DEFAULT_THEME;
   
   // Image cropping state
   const [showCropper, setShowCropper] = useState(false);
@@ -52,6 +102,13 @@ const Editor: React.FC<EditorProps> = ({ data, onChange, lang, activeView, setAc
     onChange({ ...data, template });
   };
 
+  const updateThemeColor = (key: keyof ResumeData['theme'], value: string) => {
+    onChange({
+      ...data,
+      theme: { ...theme, [key]: value }
+    });
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -78,6 +135,10 @@ const Editor: React.FC<EditorProps> = ({ data, onChange, lang, activeView, setAc
   };
 
   const handleAISummary = async () => {
+    if (!hasCredits) {
+      onUpgrade();
+      return;
+    }
     if(!process.env.API_KEY) {
         setError("API Key missing. Cannot generate summary.");
         return;
@@ -87,14 +148,21 @@ const Editor: React.FC<EditorProps> = ({ data, onChange, lang, activeView, setAc
     try {
       const summary = await generateSummary(data, lang);
       updatePersonalInfo('summary', summary);
+      // Only deduct credits after successful generation
+      await deductCreditAfterSuccess();
     } catch (err) {
       setError("Failed to generate summary. Please try again.");
+      // Credits not deducted on failure
     } finally {
       setIsGenerating(false);
     }
   };
   
   const handleAICoverLetter = async () => {
+    if (!hasCredits) {
+      onUpgrade();
+      return;
+    }
     if(!process.env.API_KEY) {
         setError("API Key missing.");
         return;
@@ -109,14 +177,21 @@ const Editor: React.FC<EditorProps> = ({ data, onChange, lang, activeView, setAc
     try {
       const letter = await generateCoverLetter(data, lang);
       updateCoverLetter('body', letter);
+      // Only deduct credits after successful generation
+      await deductCreditAfterSuccess();
     } catch (err) {
       setError("Failed to generate cover letter.");
+      // Credits not deducted on failure
     } finally {
       setIsGenerating(false);
     }
   };
 
   const handleImproveDescription = async (index: number) => {
+    if (!hasCredits) {
+      onUpgrade();
+      return;
+    }
     if(!process.env.API_KEY) {
         setError("API Key missing.");
         return;
@@ -125,13 +200,17 @@ const Editor: React.FC<EditorProps> = ({ data, onChange, lang, activeView, setAc
     if (!exp.description) return;
     
     setIsGenerating(true);
+    setError(null);
     try {
       const improved = await improveDescription(exp.description, exp.title, lang);
       const newExperiences = [...data.experiences];
       newExperiences[index] = { ...exp, description: improved };
       onChange({ ...data, experiences: newExperiences });
+      // Only deduct credits after successful improvement
+      await deductCreditAfterSuccess();
     } catch (err) {
       setError("Failed to improve description.");
+      // Credits not deducted on failure
     } finally {
       setIsGenerating(false);
     }
@@ -241,13 +320,24 @@ const Editor: React.FC<EditorProps> = ({ data, onChange, lang, activeView, setAc
                 </div>
                  <div className="flex justify-between items-center mb-1">
                     <label className="text-xs text-gray-500">{t.description}</label>
-                    <button 
-                      onClick={() => handleImproveDescription(index)}
-                      disabled={isGenerating}
-                      className="text-xs flex items-center gap-1 text-emerald-600 hover:text-emerald-800 disabled:opacity-50"
-                    >
-                      <Wand2 size={12} /> {isGenerating ? t.enhancing : t.enhance}
-                    </button>
+                    {hasCredits ? (
+                      <button 
+                        onClick={() => handleImproveDescription(index)}
+                        disabled={isGenerating}
+                        className="text-xs flex items-center gap-1 text-emerald-600 hover:text-emerald-800 disabled:opacity-50"
+                        title={t.enhanceTooltip || `${t.enhance} (1 ${t.credits?.toLowerCase() || 'credit'})`}
+                      >
+                        <Wand2 size={12} /> {isGenerating ? t.enhancing : t.enhance}
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={onUpgrade}
+                        className="text-xs flex items-center gap-1 text-gray-400 hover:text-emerald-600"
+                        title={`${t.buyCredits} - ${t.enhanceTooltip || `${t.enhance} requires 1 ${t.credits?.toLowerCase() || 'credit'}`}`}
+                      >
+                        <Lock size={12} /> {t.enhance}
+                      </button>
+                    )}
                 </div>
                 <textarea 
                   className="w-full p-2 border rounded text-sm h-24"
@@ -473,6 +563,35 @@ const Editor: React.FC<EditorProps> = ({ data, onChange, lang, activeView, setAc
       )}
       <div className="h-full overflow-y-auto bg-white border-r border-gray-200 p-6 shadow-xl z-10 relative">
       
+      {/* Credit Usage Info Box */}
+      {user && (
+        <div className="mb-4 p-3 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg">
+          <div className="flex items-start gap-2">
+            <CreditCard size={16} className="text-emerald-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <div className="text-xs font-semibold text-emerald-800 mb-1.5">{t.creditUsage}</div>
+              <div className="text-xs text-gray-700 space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                  <span>{t.resumeDownloadCost}: <span className="font-semibold text-emerald-700">2 {t.creditsText}</span></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                  <span>{t.coverLetterDownloadCost}: <span className="font-semibold text-emerald-700">2 {t.creditsText}</span></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                  <span>{t.aiFeaturesCost}: <span className="font-semibold text-emerald-700">1 {t.creditText} {t.each}</span></span>
+                </div>
+                <div className="text-xs text-gray-500 italic mt-1.5 pl-4">
+                  ({t.aiCreditsNote})
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Tab Switcher */}
       <div className="flex bg-gray-100 p-1 rounded-lg mb-6">
         <button
@@ -516,6 +635,41 @@ const Editor: React.FC<EditorProps> = ({ data, onChange, lang, activeView, setAc
                 {/* @ts-ignore */}
                 {t[temp] || temp}
             </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Theme colors */}
+      <div className="mb-6">
+        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+          <Palette size={14} />
+          {t.themeColors}
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          {([
+            { key: 'primary', label: t.primaryColor },
+            { key: 'secondary', label: t.secondaryColor },
+            { key: 'accent', label: t.accentColor },
+            { key: 'background', label: t.backgroundColor },
+            { key: 'text', label: t.textColor },
+          ] as const).map(({ key, label }) => (
+            <div key={key} className="flex items-center gap-2">
+              <input
+                type="color"
+                className="w-12 h-10 rounded border border-gray-200 cursor-pointer"
+                value={(theme as any)[key]}
+                onChange={(e) => updateThemeColor(key as keyof ResumeData['theme'], e.target.value)}
+              />
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-gray-700">{label}</p>
+                <input
+                  type="text"
+                  className="w-full border rounded px-2 py-1 text-xs text-gray-700"
+                  value={(theme as any)[key]}
+                  onChange={(e) => updateThemeColor(key as keyof ResumeData['theme'], e.target.value)}
+                />
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -617,13 +771,24 @@ const Editor: React.FC<EditorProps> = ({ data, onChange, lang, activeView, setAc
                     <div>
                     <div className="flex justify-between items-center mb-1">
                         <label className="block text-xs font-medium text-gray-500">{t.summary}</label>
-                        <button 
-                        onClick={handleAISummary}
-                        disabled={isGenerating}
-                        className="text-xs flex items-center gap-1 text-emerald-600 hover:text-emerald-800 disabled:opacity-50"
-                        >
-                        <Wand2 size={12} /> {isGenerating ? t.writing : t.autoWrite}
-                        </button>
+                        {hasCredits ? (
+                          <button 
+                            onClick={handleAISummary}
+                            disabled={isGenerating}
+                            className="text-xs flex items-center gap-1 text-emerald-600 hover:text-emerald-800 disabled:opacity-50"
+                            title={t.autoWriteTooltip || `${t.autoWrite} (1 ${t.credits?.toLowerCase() || 'credit'})`}
+                          >
+                            <Wand2 size={12} /> {isGenerating ? t.writing : t.autoWrite}
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={onUpgrade}
+                            className="text-xs flex items-center gap-1 text-gray-400 hover:text-emerald-600"
+                            title={`${t.buyCredits} - ${t.autoWriteTooltip || `${t.autoWrite} requires 1 ${t.credits?.toLowerCase() || 'credit'}`}`}
+                          >
+                            <Lock size={12} /> {t.autoWrite}
+                          </button>
+                        )}
                     </div>
                     <textarea 
                         value={data.personalInfo.summary}
@@ -673,7 +838,7 @@ const Editor: React.FC<EditorProps> = ({ data, onChange, lang, activeView, setAc
                  <p className="flex gap-2 items-start">
                      <Sparkles size={16} className="shrink-0 mt-0.5" />
                      <span>
-                         <strong>{t.coverLetterDetails}</strong> - Fill in the job details below, then click "Generate with AI" to create a personalized cover letter using all your resume information (experiences, skills, education, achievements, etc.).
+                         <strong>{t.coverLetterDetails}</strong> - {t.coverLetterInstructions}
                      </span>
                  </p>
             </div>
@@ -712,13 +877,24 @@ const Editor: React.FC<EditorProps> = ({ data, onChange, lang, activeView, setAc
             <div className="pt-4 border-t border-gray-100">
                 <div className="flex justify-between items-center mb-2">
                     <label className="block text-xs font-medium text-gray-500">{t.coverLetterBody}</label>
-                    <button 
-                      onClick={handleAICoverLetter}
-                      disabled={isGenerating}
-                      className="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-emerald-700 disabled:opacity-50 transition shadow-sm"
-                    >
-                      <Sparkles size={12} /> {isGenerating ? t.generating : t.generateCoverLetter}
-                    </button>
+                    {hasCredits ? (
+                      <button 
+                        onClick={handleAICoverLetter}
+                        disabled={isGenerating}
+                        className="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-emerald-700 disabled:opacity-50 transition shadow-sm"
+                        title={t.generateCoverLetterTooltip || `${t.generateCoverLetter} (1 credit)`}
+                      >
+                        <Sparkles size={12} /> {isGenerating ? t.generating : t.generateCoverLetter}
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={onUpgrade}
+                        className="text-xs bg-gray-400 text-white px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-gray-500 transition shadow-sm cursor-not-allowed"
+                        title={`${t.buyCredits} - ${t.generateCoverLetterTooltip || `${t.generateCoverLetter} requires 1 credit`}`}
+                      >
+                        <Lock size={12} /> {t.generateCoverLetter}
+                      </button>
+                    )}
                 </div>
                 <textarea 
                     value={data.coverLetter.body}

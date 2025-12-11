@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ResumeData, Language } from '../types';
-import { TRANSLATIONS } from '../constants';
+import { DEFAULT_THEME, TRANSLATIONS } from '../constants';
 
 interface TemplateProps {
   data: ResumeData;
@@ -10,6 +10,7 @@ interface TemplateProps {
 
 const MinimalTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
   const t = TRANSLATIONS[lang];
+  const theme = data.theme || DEFAULT_THEME;
 
   const renderSection = (key: string) => {
     switch (key) {
@@ -135,20 +136,20 @@ const MinimalTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-[297mm] p-16 bg-white text-gray-900 font-sans">
+    <div className="flex flex-col h-full min-h-[297mm] p-16 font-sans" style={{ backgroundColor: theme.background, color: theme.text }}>
       
       {/* Header */}
       <div className="mb-16">
-        <h1 className="text-6xl font-black tracking-tighter text-gray-900 mb-4 leading-none">
+        <h1 className="text-6xl font-black tracking-tighter mb-4 leading-none" style={{ color: theme.accent }}>
           {data.personalInfo.fullName.split(' ')[0]}<br/>
-          <span className="text-gray-400">{data.personalInfo.fullName.split(' ').slice(1).join(' ')}</span>
+          <span style={{ color: theme.primary }}>{data.personalInfo.fullName.split(' ').slice(1).join(' ')}</span>
         </h1>
         
-        <div className="flex justify-between items-end border-b border-gray-900 pb-4">
-            <div className="text-sm font-bold uppercase tracking-widest text-gray-900">
+        <div className="flex justify-between items-end border-b pb-4" style={{ borderColor: theme.primary }}>
+            <div className="text-sm font-bold uppercase tracking-widest" style={{ color: theme.accent }}>
                 {data.personalInfo.role}
             </div>
-            <div className="text-right text-xs font-medium text-gray-500 leading-relaxed">
+            <div className="text-right text-xs font-medium leading-relaxed" style={{ color: theme.text }}>
                 {data.personalInfo.email}<br/>
                 {data.personalInfo.phone}<br/>
                 {data.personalInfo.location}
@@ -162,10 +163,10 @@ const MinimalTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
           {/* Summary */}
           {data.personalInfo.summary && (
               <div className="mb-8 grid grid-cols-[100px_1fr] gap-4">
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest text-right pt-1">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-right pt-1" style={{ color: theme.primary }}>
                     {t.about}
                   </h3>
-                  <p className="text-sm text-gray-800 leading-relaxed">
+                  <p className="text-sm leading-relaxed" style={{ color: theme.text }}>
                     {data.personalInfo.summary}
                   </p>
               </div>

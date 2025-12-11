@@ -1,15 +1,17 @@
 
 import React from 'react';
 import { ResumeData, Language } from '../types';
-import { TRANSLATIONS } from '../constants';
+import { DEFAULT_THEME, TRANSLATIONS } from '../constants';
 
 interface CoverLetterProps {
   data: ResumeData;
   lang: Language;
+  showWatermark?: boolean;
 }
 
-const CoverLetterPreview: React.FC<CoverLetterProps> = ({ data, lang }) => {
+const CoverLetterPreview: React.FC<CoverLetterProps> = ({ data, lang, showWatermark = false }) => {
   const t = TRANSLATIONS[lang];
+  const theme = data.theme || DEFAULT_THEME;
   const currentDate = new Date().toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US', {
     year: 'numeric',
     month: 'long',
@@ -26,21 +28,21 @@ const CoverLetterPreview: React.FC<CoverLetterProps> = ({ data, lang }) => {
         case 'minimal':
             return (
                 <div className="mb-16 border-b border-gray-900 pb-6">
-                    <h1 className="text-5xl font-black tracking-tighter text-gray-900 mb-2 uppercase">
+                    <h1 className="text-5xl font-black tracking-tighter mb-2 uppercase" style={{ color: theme.accent }}>
                         {data.personalInfo.fullName}
                     </h1>
-                    <div className="text-sm font-medium text-gray-500 flex flex-wrap gap-4">
+                    <div className="text-sm font-medium flex flex-wrap gap-4" style={{ color: theme.primary }}>
                         {data.personalInfo.email} <span>•</span> {data.personalInfo.phone} <span>•</span> {data.personalInfo.location}
                     </div>
                 </div>
             );
         case 'classic':
             return (
-                <div className="text-center mb-12 border-b-4 border-gray-800 pb-8">
-                    <h1 className="text-4xl font-serif font-bold uppercase tracking-tight mb-2">
+                <div className="text-center mb-12 border-b-4 pb-8" style={{ borderColor: theme.primary }}>
+                    <h1 className="text-4xl font-serif font-bold uppercase tracking-tight mb-2" style={{ color: theme.accent }}>
                         {data.personalInfo.fullName}
                     </h1>
-                    <div className="text-sm font-serif italic text-gray-600">
+                    <div className="text-sm font-serif italic" style={{ color: theme.primary }}>
                         {data.personalInfo.email} &bull; {data.personalInfo.phone} &bull; {data.personalInfo.location}
                     </div>
                 </div>
@@ -52,18 +54,18 @@ const CoverLetterPreview: React.FC<CoverLetterProps> = ({ data, lang }) => {
         default:
             return (
                 <div className="mb-12">
-                     <h1 className={`text-4xl font-bold uppercase tracking-tight mb-2 ${data.template === 'modern' ? 'text-emerald-800' : data.template === 'creative' ? 'text-blue-900' : 'text-gray-900'}`}>
+                     <h1 className="text-4xl font-bold uppercase tracking-tight mb-2" style={{ color: theme.accent }}>
                         {data.personalInfo.fullName}
                     </h1>
-                    <div className="text-sm text-gray-600 font-medium">
+                    <div className="text-sm font-medium" style={{ color: theme.primary }}>
                         {data.personalInfo.role}
                     </div>
-                    <div className="text-sm text-gray-500 mt-2 flex flex-wrap gap-4">
+                    <div className="text-sm mt-2 flex flex-wrap gap-4" style={{ color: theme.text }}>
                          <span>{data.personalInfo.email}</span>
                          <span>{data.personalInfo.phone}</span>
                          <span>{data.personalInfo.location}</span>
                     </div>
-                    <hr className={`mt-6 border-t-2 ${data.template === 'modern' ? 'border-emerald-500' : data.template === 'creative' ? 'border-blue-500' : 'border-gray-800'}`} />
+                    <hr className="mt-6 border-t-2" style={{ borderColor: theme.primary }} />
                 </div>
             );
     }
@@ -76,9 +78,41 @@ const CoverLetterPreview: React.FC<CoverLetterProps> = ({ data, lang }) => {
         width: '210mm',
         minHeight: '297mm',
         height: 'auto',
-        padding: '25mm'
+        padding: '25mm',
+        backgroundColor: data.theme?.background || DEFAULT_THEME.background,
+        color: data.theme?.text || DEFAULT_THEME.text
       }}
     >
+      {showWatermark && (
+        <div
+          className="pointer-events-none select-none absolute inset-0 print:hidden z-20 overflow-hidden"
+          style={{
+            opacity: 0.22,
+            backgroundImage: `repeating-linear-gradient(45deg, rgba(15,23,42,0.14) 0, rgba(15,23,42,0.14) 2px, transparent 2px, transparent 18px)`,
+          }}
+        >
+          <div className="absolute inset-0" style={{ overflow: 'hidden' }}>
+            {[...Array(4)].map((_, row) => (
+              <div key={row} className="flex gap-12" style={{ marginTop: `${row * 25}%` }}>
+                {[...Array(3)].map((__, col) => (
+                  <span
+                    key={`${row}-${col}`}
+                    className="text-3xl md:text-4xl font-black tracking-widest whitespace-nowrap"
+                    style={{ 
+                      color: 'rgba(31,41,55,0.28)',
+                      transform: 'rotate(-45deg)',
+                      transformOrigin: 'center',
+                      display: 'inline-block'
+                    }}
+                  >
+                    BaraCV Preview
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       {/* Header */}
       {renderHeader()}
 
@@ -90,13 +124,13 @@ const CoverLetterPreview: React.FC<CoverLetterProps> = ({ data, lang }) => {
       {/* Recipient Block */}
       <div className="mb-8 text-gray-800 leading-relaxed">
         <div className="font-bold">{data.coverLetter.recipientName}</div>
-        <div>{data.coverLetter.jobTitle ? `Hiring for ${data.coverLetter.jobTitle}` : ''}</div>
+        <div>{data.coverLetter.jobTitle ? `${t.hiringFor} ${data.coverLetter.jobTitle}` : ''}</div>
         <div className="font-bold">{data.coverLetter.companyName}</div>
       </div>
 
       {/* Body Content */}
       <div className="text-gray-800 leading-7 whitespace-pre-wrap text-[15px] text-justify">
-        {data.coverLetter.body || "(Cover letter content will appear here. Use the editor to write or generate one.)"}
+        {data.coverLetter.body || t.coverLetterPlaceholder}
       </div>
 
     </div>

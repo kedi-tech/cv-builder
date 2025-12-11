@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ResumeData, Language } from '../types';
-import { TRANSLATIONS } from '../constants';
+import { DEFAULT_THEME, TRANSLATIONS } from '../constants';
 import { 
   Phone, 
   Mail, 
@@ -24,6 +24,7 @@ const LEFT_SECTIONS = new Set(['experience', 'education', 'summary']);
 
 const ProfessionalTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
   const t = TRANSLATIONS[lang];
+  const theme = data.theme || DEFAULT_THEME;
 
   const renderLeftSection = (key: string) => {
     switch (key) {
@@ -48,13 +49,13 @@ const ProfessionalTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
               {data.experiences.map((exp) => (
                 <div key={exp.id}>
                   <div className="flex justify-between items-baseline mb-1">
-                    <h4 className="font-bold text-sky-700 text-md">{exp.title}</h4>
+                    <h4 className="font-bold text-md" style={{ color: theme.primary }}>{exp.title}</h4>
                   </div>
                   <div className="flex justify-between items-center mb-2 text-sm text-gray-700 font-medium">
                      <span>{exp.company}</span>
                      <span className="text-gray-500 text-xs italic">{exp.startDate} – {exp.endDate} | {exp.location}</span>
                   </div>
-                  <div className="text-sm text-gray-600 leading-relaxed whitespace-pre-line pl-1 border-l-2 border-sky-100">
+                  <div className="text-sm text-gray-600 leading-relaxed whitespace-pre-line pl-1" style={{ borderLeft: `2px solid ${theme.primary}` }}>
                     {exp.description}
                   </div>
                 </div>
@@ -72,12 +73,12 @@ const ProfessionalTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
               {data.education.map((edu) => (
                 <div key={edu.id}>
                   <div className="flex justify-between items-baseline mb-1">
-                    <h4 className="font-bold text-gray-900 text-sm">{edu.school}</h4>
+                    <h4 className="font-bold text-sm" style={{ color: theme.accent }}>{edu.school}</h4>
                     <span className="text-xs text-gray-500 font-medium">
                       {edu.startDate} – {edu.endDate}
                     </span>
                   </div>
-                  <div className="text-sm text-sky-700 font-medium">
+                  <div className="text-sm font-medium" style={{ color: theme.primary }}>
                     {edu.degree}
                   </div>
                 </div>
@@ -101,7 +102,7 @@ const ProfessionalTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
             <div className="flex flex-col gap-3">
               {data.achievements.map((ach) => (
                 <div key={ach.id} className="relative pl-4">
-                  <Star className="w-3 h-3 text-sky-600 absolute left-0 top-1" />
+                  <Star className="w-3 h-3 absolute left-0 top-1" style={{ color: theme.primary }} />
                   <h4 className="text-xs font-bold text-gray-800 mb-0.5">
                     {ach.title}
                   </h4>
@@ -142,7 +143,7 @@ const ProfessionalTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
                      {t.level} {lang.proficiency}/5
                   </div>
                   <div className="w-full bg-gray-200 h-1 mt-0.5 rounded-full overflow-hidden">
-                    <div className="bg-sky-600 h-full" style={{ width: `${(lang.proficiency/5)*100}%` }}></div>
+                    <div className="h-full" style={{ width: `${(lang.proficiency/5)*100}%`, backgroundColor: theme.primary }}></div>
                   </div>
                 </div>
               ))}
@@ -170,7 +171,7 @@ const ProfessionalTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
             </h3>
             <div className="flex flex-wrap gap-2">
                {data.interests.map((interest, idx) => (
-                 <span key={idx} className="bg-sky-50 text-sky-800 px-2 py-0.5 rounded text-[10px] font-medium border border-sky-100">
+                 <span key={idx} className="px-2 py-0.5 rounded text-[10px] font-medium border" style={{ backgroundColor: `${theme.primary}0D`, color: theme.primary, borderColor: `${theme.primary}33` }}>
                    {interest}
                  </span>
                ))}
@@ -193,41 +194,41 @@ const ProfessionalTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
     .map(key => renderRightSection(key));
 
   return (
-    <div className="flex flex-col h-full min-h-[297mm] bg-white text-gray-800">
+    <div className="flex flex-col h-full min-h-[297mm]" style={{ backgroundColor: theme.background, color: theme.text }}>
         
         {/* Header */}
         <div className="px-10 pt-10 pb-6 border-b border-gray-200">
             <div className="flex justify-between items-start">
                 <div className="flex-1">
-                    <h1 className="text-4xl font-bold text-gray-900 uppercase tracking-tight mb-2">
+                    <h1 className="text-4xl font-bold uppercase tracking-tight mb-2" style={{ color: theme.accent }}>
                         {data.personalInfo.fullName}
                     </h1>
-                    <div className="text-xl text-sky-700 font-medium mb-4">
+                    <div className="text-xl font-medium mb-4" style={{ color: theme.primary }}>
                         {data.personalInfo.role}
                     </div>
                     
                     <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-600">
                         {data.personalInfo.email && (
                             <div className="flex items-center gap-1.5">
-                                <Mail className="w-3.5 h-3.5 text-sky-600" />
+                                <Mail className="w-3.5 h-3.5" style={{ color: theme.primary }} />
                                 <span>{data.personalInfo.email}</span>
                             </div>
                         )}
                         {data.personalInfo.phone && (
                             <div className="flex items-center gap-1.5">
-                                <Phone className="w-3.5 h-3.5 text-sky-600" />
+                                <Phone className="w-3.5 h-3.5" style={{ color: theme.primary }} />
                                 <span>{data.personalInfo.phone}</span>
                             </div>
                         )}
                         {data.personalInfo.linkedin && (
                             <div className="flex items-center gap-1.5">
-                                <Linkedin className="w-3.5 h-3.5 text-sky-600" />
+                                <Linkedin className="w-3.5 h-3.5" style={{ color: theme.primary }} />
                                 <span className="max-w-[150px] truncate">{data.personalInfo.linkedin.replace(/^https?:\/\//, '')}</span>
                             </div>
                         )}
                         {data.personalInfo.location && (
                             <div className="flex items-center gap-1.5">
-                                <MapPin className="w-3.5 h-3.5 text-sky-600" />
+                                <MapPin className="w-3.5 h-3.5" style={{ color: theme.primary }} />
                                 <span>{data.personalInfo.location}</span>
                             </div>
                         )}
@@ -256,7 +257,7 @@ const ProfessionalTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
             </div>
 
             {/* Right Sidebar */}
-            <div className="w-[35%] bg-gray-50 p-8 border-l border-gray-100">
+            <div className="w-[35%] p-8 border-l border-gray-100" style={{ backgroundColor: theme.background }}>
                 {rightColumnContent}
             </div>
         </div>

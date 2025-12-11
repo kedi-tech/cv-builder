@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ResumeData, Language } from '../types';
-import { TRANSLATIONS } from '../constants';
+import { DEFAULT_THEME, TRANSLATIONS } from '../constants';
 import { 
   Phone, 
   Mail, 
@@ -21,6 +21,7 @@ const LEFT_SECTIONS = new Set(['experience', 'education', 'summary']);
 
 const ElegantTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
   const t = TRANSLATIONS[lang];
+  const theme = data.theme || DEFAULT_THEME;
 
   const renderLeftSection = (key: string) => {
     switch (key) {
@@ -49,7 +50,7 @@ const ElegantTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
                     <h4 className="font-bold text-gray-900 text-lg">{exp.title}</h4>
                   </div>
                   <div className="flex justify-between items-center mb-2">
-                     <span className="text-emerald-600 font-medium text-sm">{exp.company}</span>
+                     <span className="font-medium text-sm" style={{ color: theme.primary }}>{exp.company}</span>
                      <span className="text-gray-500 text-xs flex items-center gap-1">
                         <span className="w-1 h-1 rounded-full bg-gray-400"></span>
                         {exp.startDate} – {exp.endDate}
@@ -103,7 +104,7 @@ const ElegantTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
             <div className="flex flex-col gap-5">
               {data.achievements.map((ach) => (
                 <div key={ach.id} className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5" style={{ backgroundColor: `${theme.primary}14`, color: theme.primary }}>
                      <Award size={16} />
                   </div>
                   <div>
@@ -146,7 +147,7 @@ const ElegantTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
                   <span className="font-semibold text-gray-800">{lang.language}</span>
                   <div className="flex gap-1">
                      {[1,2,3,4,5].map(i => (
-                         <div key={i} className={`w-1.5 h-1.5 rounded-full ${i <= lang.proficiency ? 'bg-emerald-500' : 'bg-gray-200'}`}></div>
+                         <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: i <= lang.proficiency ? theme.primary : '#e5e7eb' }}></div>
                      ))}
                   </div>
                 </div>
@@ -201,7 +202,7 @@ const ElegantTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
     .map(key => renderRightSection(key));
 
   return (
-    <div className="flex flex-col h-full min-h-[297mm] bg-white text-gray-800 font-sans">
+    <div className="flex flex-col h-full min-h-[297mm] font-sans" style={{ backgroundColor: theme.background, color: theme.text }}>
         
         {/* Header */}
         <div className="p-10 pb-6">
@@ -210,7 +211,7 @@ const ElegantTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
                      <h1 className="text-5xl font-bold text-gray-900 tracking-tight mb-2">
                         {data.personalInfo.fullName}
                     </h1>
-                    <div className="text-xl text-emerald-600 font-medium tracking-wide uppercase mb-4">
+                    <div className="text-xl font-medium tracking-wide uppercase mb-4" style={{ color: theme.primary }}>
                         {data.personalInfo.role}
                     </div>
                      <div className="flex flex-wrap gap-5 text-sm text-gray-600">

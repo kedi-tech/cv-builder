@@ -1,6 +1,6 @@
 import React from 'react';
 import { ResumeData, Language } from '../types';
-import { TRANSLATIONS } from '../constants';
+import { DEFAULT_THEME, TRANSLATIONS } from '../constants';
 import { 
   Phone, 
   Mail, 
@@ -20,25 +20,39 @@ interface TemplateProps {
   lang: Language;
 }
 
+const withAlpha = (color: string, alpha: number) => {
+  if (color.startsWith('#')) {
+    const hex = color.replace('#', '');
+    const normalized = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+    const num = parseInt(normalized, 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+  return color;
+};
+
 const LEFT_SECTIONS = new Set(['achievements', 'courses', 'interests']);
 const RIGHT_SECTIONS = new Set(['experience', 'education', 'skills', 'languages']);
 
 const ModernTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
   const t = TRANSLATIONS[lang];
+  const theme = data.theme || DEFAULT_THEME;
 
   const renderLeftSection = (key: string) => {
     switch (key) {
       case 'achievements':
         return data.achievements.length > 0 && (
           <div key={key}>
-            <h3 className="flex items-center gap-2 text-emerald-700 font-bold tracking-wider text-sm mb-3 uppercase">
+            <h3 className="flex items-center gap-2 font-bold tracking-wider text-sm mb-3 uppercase" style={{ color: theme.primary }}>
               <Flag className="w-4 h-4" /> {t.achievements}
             </h3>
             <div className="flex flex-col gap-4">
               {data.achievements.map((ach) => (
                 <div key={ach.id}>
                   <h4 className="text-xs font-bold text-gray-800 mb-1 flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                    <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: theme.primary }}></span>
                     {ach.title}
                   </h4>
                   <p className="text-[10px] text-gray-600 pl-3.5 leading-relaxed">
@@ -52,7 +66,7 @@ const ModernTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
       case 'courses':
         return data.courses.length > 0 && (
           <div key={key}>
-            <h3 className="flex items-center gap-2 text-emerald-700 font-bold tracking-wider text-sm mb-3 uppercase">
+            <h3 className="flex items-center gap-2 font-bold tracking-wider text-sm mb-3 uppercase" style={{ color: theme.primary }}>
               <BookOpen className="w-4 h-4" /> {t.courses}
             </h3>
             <ul className="text-xs text-gray-600 flex flex-col gap-1.5">
@@ -65,13 +79,13 @@ const ModernTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
       case 'interests':
         return data.interests.length > 0 && (
           <div key={key}>
-            <h3 className="flex items-center gap-2 text-emerald-700 font-bold tracking-wider text-sm mb-3 uppercase">
+            <h3 className="flex items-center gap-2 font-bold tracking-wider text-sm mb-3 uppercase" style={{ color: theme.primary }}>
               <Heart className="w-4 h-4" /> {t.interests}
             </h3>
             <div className="flex flex-wrap gap-2">
               {data.interests.map((interest, idx) => (
                 <span key={idx} className="flex items-center gap-1.5 text-xs text-gray-700">
-                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                   <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: theme.primary }}></span>
                    {interest}
                 </span>
               ))}
@@ -88,7 +102,7 @@ const ModernTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
       case 'experience':
         return data.experiences.length > 0 && (
           <div key={key}>
-            <h3 className="flex items-center gap-2 text-emerald-700 font-bold tracking-wider text-sm mb-5 uppercase border-b border-emerald-100 pb-2">
+            <h3 className="flex items-center gap-2 font-bold tracking-wider text-sm mb-5 uppercase pb-2" style={{ color: theme.primary, borderBottom: `1px solid ${withAlpha(theme.primary, 0.25)}` }}>
               <Briefcase className="w-4 h-4" /> {t.experience}
             </h3>
             <div className="flex flex-col gap-6">
@@ -115,7 +129,7 @@ const ModernTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
       case 'education':
         return data.education.length > 0 && (
           <div key={key}>
-            <h3 className="flex items-center gap-2 text-emerald-700 font-bold tracking-wider text-sm mb-5 uppercase border-b border-emerald-100 pb-2">
+            <h3 className="flex items-center gap-2 font-bold tracking-wider text-sm mb-5 uppercase pb-2" style={{ color: theme.primary, borderBottom: `1px solid ${withAlpha(theme.primary, 0.25)}` }}>
               <GraduationCap className="w-4 h-4" /> {t.education}
             </h3>
             <div className="flex flex-col gap-4">
@@ -138,12 +152,12 @@ const ModernTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
       case 'skills':
         return data.skills.length > 0 && (
           <div key={key}>
-            <h3 className="flex items-center gap-2 text-emerald-700 font-bold tracking-wider text-sm mb-4 uppercase border-b border-emerald-100 pb-2">
+            <h3 className="flex items-center gap-2 font-bold tracking-wider text-sm mb-4 uppercase pb-2" style={{ color: theme.primary, borderBottom: `1px solid ${withAlpha(theme.primary, 0.25)}` }}>
               <Zap className="w-4 h-4" /> {t.skills}
             </h3>
             <div className="flex flex-wrap gap-2">
               {data.skills.map((skill, idx) => (
-                <span key={idx} className="bg-gray-100 text-gray-700 px-3 py-1 rounded text-xs font-medium">
+                <span key={idx} className="bg-gray-100 text-gray-700 px-3 py-1 rounded text-xs font-medium" style={{ backgroundColor: withAlpha(theme.primary, 0.08), color: theme.accent }}>
                   {skill}
                 </span>
               ))}
@@ -153,7 +167,7 @@ const ModernTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
       case 'languages':
         return data.languages.length > 0 && (
           <div key={key}>
-            <h3 className="flex items-center gap-2 text-emerald-700 font-bold tracking-wider text-sm mb-4 uppercase border-b border-emerald-100 pb-2">
+            <h3 className="flex items-center gap-2 font-bold tracking-wider text-sm mb-4 uppercase pb-2" style={{ color: theme.primary, borderBottom: `1px solid ${withAlpha(theme.primary, 0.25)}` }}>
               <Flag className="w-4 h-4" /> {t.languages}
             </h3>
             <div className="grid grid-cols-2 gap-4">
@@ -164,7 +178,8 @@ const ModernTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
                     {[1, 2, 3, 4, 5].map((dot) => (
                       <div 
                         key={dot} 
-                        className={`w-2 h-2 rounded-full ${dot <= lang.proficiency ? 'bg-emerald-400' : 'bg-gray-200'}`}
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: dot <= lang.proficiency ? theme.primary : '#e5e7eb' }}
                       ></div>
                     ))}
                   </div>
@@ -188,16 +203,16 @@ const ModernTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
     .map(key => renderRightSection(key));
 
   return (
-    <div className="flex h-full min-h-[297mm]">
+    <div className="flex h-full min-h-[297mm]" style={{ backgroundColor: theme.background, color: theme.text }}>
         {/* --- LEFT COLUMN --- */}
-        <div className="w-[35%] bg-white pr-6 pl-8 pt-8 pb-8 flex flex-col gap-8 border-r border-gray-100">
+        <div className="w-[35%] pr-6 pl-8 pt-8 pb-8 flex flex-col gap-8 border-r border-gray-100" style={{ backgroundColor: theme.background }}>
           
           {/* Profile Image & Decor (Fixed) */}
           <div className="relative mx-auto mb-2">
             {/* Decorative blobs mimicking the template */}
-            <div className="absolute -top-4 -left-4 w-32 h-32 bg-emerald-100 rounded-full opacity-70 mix-blend-multiply filter blur-sm"></div>
-            <div className="absolute top-0 -right-2 w-32 h-32 bg-teal-100 rounded-full opacity-70 mix-blend-multiply filter blur-sm"></div>
-            <div className="absolute -bottom-2 left-4 w-32 h-32 bg-green-50 rounded-full opacity-70 mix-blend-multiply filter blur-sm"></div>
+            <div className="absolute -top-4 -left-4 w-32 h-32 rounded-full opacity-70 mix-blend-multiply filter blur-sm" style={{ backgroundColor: withAlpha(theme.primary, 0.18) }}></div>
+            <div className="absolute top-0 -right-2 w-32 h-32 rounded-full opacity-70 mix-blend-multiply filter blur-sm" style={{ backgroundColor: withAlpha(theme.secondary, 0.2) }}></div>
+            <div className="absolute -bottom-2 left-4 w-32 h-32 rounded-full opacity-70 mix-blend-multiply filter blur-sm" style={{ backgroundColor: withAlpha(theme.primary, 0.12) }}></div>
             
             {data.personalInfo.photoUrl && (
               <div className="relative w-36 h-36 rounded-full overflow-hidden border-4 border-white shadow-md mx-auto">
@@ -214,36 +229,36 @@ const ModernTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
                </div>
             )}
             {/* Small green dot decoration */}
-            <div className="absolute bottom-2 right-4 w-6 h-6 bg-emerald-500 rounded-full border-2 border-white"></div>
+            <div className="absolute bottom-2 right-4 w-6 h-6 rounded-full border-2 border-white" style={{ backgroundColor: theme.primary }}></div>
           </div>
 
           {/* Contacts (Fixed) */}
           <div>
-            <h3 className="flex items-center gap-2 text-emerald-700 font-bold tracking-wider text-sm mb-4 uppercase">
+            <h3 className="flex items-center gap-2 font-bold tracking-wider text-sm mb-4 uppercase" style={{ color: theme.primary }}>
               <Mail className="w-4 h-4" /> {t.contacts}
             </h3>
             <div className="flex flex-col gap-3 text-xs text-gray-600">
               {data.personalInfo.phone && (
                 <div className="flex items-center gap-2">
-                  <Phone className="w-3 h-3 text-emerald-500" />
+                  <Phone className="w-3 h-3" style={{ color: theme.primary }} />
                   <span>{data.personalInfo.phone}</span>
                 </div>
               )}
               {data.personalInfo.email && (
                 <div className="flex items-center gap-2">
-                  <Mail className="w-3 h-3 text-emerald-500" />
+                  <Mail className="w-3 h-3" style={{ color: theme.primary }} />
                   <span className="break-all">{data.personalInfo.email}</span>
                 </div>
               )}
               {data.personalInfo.linkedin && (
                 <div className="flex items-center gap-2">
-                  <Linkedin className="w-3 h-3 text-emerald-500" />
+                  <Linkedin className="w-3 h-3" style={{ color: theme.primary }} />
                   <span className="truncate">{data.personalInfo.linkedin.replace(/^https?:\/\//, '')}</span>
                 </div>
               )}
               {data.personalInfo.location && (
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-3 h-3 text-emerald-500" />
+                  <MapPin className="w-3 h-3" style={{ color: theme.primary }} />
                   <span>{data.personalInfo.location}</span>
                 </div>
               )}
@@ -252,7 +267,7 @@ const ModernTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
 
           {/* Summary (Fixed in Left Sidebar for this design) */}
           <div>
-            <h3 className="flex items-center gap-2 text-emerald-700 font-bold tracking-wider text-sm mb-3 uppercase">
+            <h3 className="flex items-center gap-2 font-bold tracking-wider text-sm mb-3 uppercase" style={{ color: theme.primary }}>
               <User className="w-4 h-4" /> {t.summary}
             </h3>
             <p className="text-xs text-gray-600 leading-relaxed text-justify">
@@ -273,8 +288,8 @@ const ModernTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
             <h1 className="text-4xl font-light text-gray-800 tracking-tight uppercase mb-3">
               {data.personalInfo.fullName}
             </h1>
-            <div className="inline-block bg-emerald-200/50 rounded-full px-6 py-1.5">
-              <span className="text-emerald-800 font-bold tracking-widest text-sm uppercase">
+            <div className="inline-block rounded-full px-6 py-1.5" style={{ backgroundColor: withAlpha(theme.primary, 0.18) }}>
+              <span className="font-bold tracking-widest text-sm uppercase" style={{ color: theme.primary }}>
                 {data.personalInfo.role}
               </span>
             </div>

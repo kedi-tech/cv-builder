@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ResumeData, Language } from '../types';
-import { TRANSLATIONS } from '../constants';
+import { DEFAULT_THEME, TRANSLATIONS } from '../constants';
 
 interface TemplateProps {
   data: ResumeData;
@@ -10,6 +10,7 @@ interface TemplateProps {
 
 const ClassicTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
   const t = TRANSLATIONS[lang];
+  const theme = data.theme || DEFAULT_THEME;
 
   const renderSection = (key: string) => {
     switch (key) {
@@ -138,14 +139,14 @@ const ClassicTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-[297mm] p-12 bg-white text-gray-900">
+    <div className="flex flex-col h-full min-h-[297mm] p-12" style={{ backgroundColor: theme.background, color: theme.text }}>
       
       {/* Header */}
-      <div className="text-center mb-10 border-b-4 border-gray-800 pb-8">
-        <h1 className="text-4xl font-serif font-bold tracking-tight uppercase mb-2">
+      <div className="text-center mb-10 border-b-4 pb-8" style={{ borderColor: theme.primary }}>
+        <h1 className="text-4xl font-serif font-bold tracking-tight uppercase mb-2" style={{ color: theme.accent }}>
           {data.personalInfo.fullName}
         </h1>
-        <div className="text-lg text-gray-600 font-serif italic mb-4">
+        <div className="text-lg font-serif italic mb-4" style={{ color: theme.primary }}>
           {data.personalInfo.role}
         </div>
         
@@ -175,7 +176,7 @@ const ClassicTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
       {/* Summary - Only if exists */}
       {data.personalInfo.summary && (
         <div className="mb-8">
-           <p className="text-sm font-serif leading-relaxed text-center italic text-gray-700 max-w-2xl mx-auto">
+           <p className="text-sm font-serif leading-relaxed text-center italic max-w-2xl mx-auto" style={{ color: theme.accent }}>
              "{data.personalInfo.summary}"
            </p>
         </div>

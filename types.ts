@@ -31,6 +31,14 @@ export interface Achievement {
   description: string;
 }
 
+export interface ThemeConfig {
+  primary: string;
+  secondary: string;
+  accent: string;
+  background: string;
+  text: string;
+}
+
 export interface CoverLetterData {
   recipientName: string;
   companyName: string;
@@ -59,4 +67,5 @@ export interface ResumeData {
   interests: string[];
   sectionOrder: string[];
   coverLetter: CoverLetterData;
+  theme: ThemeConfig;
 }

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ResumeData, Language } from '../types';
-import { TRANSLATIONS } from '../constants';
+import { DEFAULT_THEME, TRANSLATIONS } from '../constants';
 import { 
   Phone, 
   Mail, 
@@ -23,9 +23,10 @@ const LEFT_SECTIONS = new Set(['experience', 'education', 'summary']);
 
 const CreativeTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
   const t = TRANSLATIONS[lang];
+  const theme = data.theme || DEFAULT_THEME;
 
   const HexagonPattern = () => (
-    <svg className="absolute top-0 right-0 w-[400px] h-[400px] opacity-10 pointer-events-none text-blue-600" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+    <svg className="absolute top-0 right-0 w-[400px] h-[400px] opacity-10 pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" style={{ color: theme.primary }}>
        <pattern id="hexagons" width="20" height="17.4" patternUnits="userSpaceOnUse" patternTransform="scale(2)">
         <polygon points="10 0 20 5 20 15 10 20 0 15 0 5" fill="none" stroke="currentColor" strokeWidth="0.5"/>
       </pattern>
@@ -58,13 +59,13 @@ const CreativeTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
             <div className="flex flex-col gap-8 relative border-l-2 border-gray-100 pl-6 ml-2">
               {data.experiences.map((exp) => (
                 <div key={exp.id} className="relative">
-                  <div className="absolute -left-[31px] top-1.5 w-3 h-3 bg-blue-600 rounded-full border-2 border-white"></div>
+                  <div className="absolute -left-[31px] top-1.5 w-3 h-3 rounded-full border-2 border-white" style={{ backgroundColor: theme.primary }}></div>
                   <h4 className="font-bold text-gray-900 text-lg leading-tight">{exp.title}</h4>
-                  <div className="text-blue-600 font-bold text-sm mb-1">{exp.company}</div>
+                  <div className="font-bold text-sm mb-1" style={{ color: theme.primary }}>{exp.company}</div>
                   
                   <div className="flex items-center gap-2 text-xs text-gray-500 font-medium uppercase tracking-wide mb-3">
                      <span className="bg-gray-100 px-2 py-0.5 rounded">{exp.startDate} – {exp.endDate}</span>
-                     <span>{exp.location}</span>
+                     <span style={{ color: theme.primary }}>{exp.location}</span>
                   </div>
 
                   <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
@@ -85,7 +86,7 @@ const CreativeTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
               {data.education.map((edu) => (
                 <div key={edu.id}>
                   <h4 className="font-bold text-gray-900 text-md">{edu.school}</h4>
-                   <div className="text-blue-600 font-medium text-sm">{edu.degree}</div>
+                   <div className="font-medium text-sm" style={{ color: theme.primary }}>{edu.degree}</div>
                    <div className="text-xs text-gray-500 font-medium mt-1 bg-gray-50 inline-block px-2 py-0.5 rounded">
                       {edu.startDate} – {edu.endDate}
                    </div>
@@ -111,7 +112,7 @@ const CreativeTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
               {data.achievements.map((ach) => (
                 <div key={ach.id}>
                   <div className="flex items-center gap-2 mb-1">
-                      <Target className="w-4 h-4 text-blue-600" />
+                      <Target className="w-4 h-4" style={{ color: theme.primary }} />
                       <h4 className="text-sm font-bold text-gray-900 leading-tight">
                         {ach.title}
                       </h4>
@@ -150,10 +151,10 @@ const CreativeTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
                 <div key={lang.id} className="flex flex-col">
                   <div className="flex justify-between text-xs font-bold text-gray-800 mb-1">
                     <span>{lang.language}</span>
-                    <span className="text-blue-600">{lang.proficiency}/5</span>
+                    <span style={{ color: theme.primary }}>{lang.proficiency}/5</span>
                   </div>
                   <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-blue-600 h-full" style={{ width: `${(lang.proficiency/5)*100}%` }}></div>
+                    <div className="h-full" style={{ width: `${(lang.proficiency/5)*100}%`, backgroundColor: theme.primary }}></div>
                   </div>
                 </div>
               ))}
@@ -168,7 +169,7 @@ const CreativeTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
             </h3>
             <ul className="text-xs text-gray-700 space-y-2 font-medium">
               {data.courses.map((course, idx) => (
-                <li key={idx} className="border-l-2 border-blue-400 pl-2">
+                <li key={idx} className="border-l-2 pl-2" style={{ borderColor: theme.primary }}>
                     {course}
                 </li>
               ))}
@@ -183,7 +184,7 @@ const CreativeTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
             </h3>
             <div className="flex flex-wrap gap-2">
                {data.interests.map((interest, idx) => (
-                 <span key={idx} className="text-xs font-bold text-blue-800 bg-blue-50 px-2 py-1 rounded">
+                 <span key={idx} className="text-xs font-bold px-2 py-1 rounded" style={{ color: theme.primary, backgroundColor: `${theme.primary}14` }}>
                    #{interest}
                  </span>
                ))}
@@ -205,35 +206,35 @@ const CreativeTemplate: React.FC<TemplateProps> = ({ data, lang }) => {
     .map(key => renderRightSection(key));
 
   return (
-    <div className="flex flex-col h-full min-h-[297mm] bg-white text-gray-800 font-sans relative overflow-hidden">
+    <div className="flex flex-col h-full min-h-[297mm] font-sans relative overflow-hidden" style={{ backgroundColor: theme.background, color: theme.text }}>
         
         {/* Decorative Background */}
         <HexagonPattern />
 
         {/* Header */}
         <div className="p-12 pb-6 relative z-10">
-            <h1 className="text-5xl font-black text-blue-900 uppercase tracking-tighter mb-2 leading-none">
+            <h1 className="text-5xl font-black uppercase tracking-tighter mb-2 leading-none" style={{ color: theme.accent }}>
                 {data.personalInfo.fullName}
             </h1>
-            <div className="text-lg font-bold text-blue-500 uppercase tracking-widest mb-6">
+            <div className="text-lg font-bold uppercase tracking-widest mb-6" style={{ color: theme.primary }}>
                 {data.personalInfo.role}
             </div>
             
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-gray-600 border-t border-gray-200 pt-4">
                  {data.personalInfo.email && (
-                    <div className="flex items-center gap-1.5 hover:text-blue-600 transition">
+                    <div className="flex items-center gap-1.5 transition" style={{ color: theme.primary }}>
                         <Mail className="w-4 h-4" />
                         <span>{data.personalInfo.email}</span>
                     </div>
                 )}
                 {data.personalInfo.linkedin && (
-                    <div className="flex items-center gap-1.5 hover:text-blue-600 transition">
+                    <div className="flex items-center gap-1.5 transition" style={{ color: theme.primary }}>
                         <Linkedin className="w-4 h-4" />
                         <span className="truncate">{data.personalInfo.linkedin.replace(/^https?:\/\//, '')}</span>
                     </div>
                 )}
                  {data.personalInfo.location && (
-                    <div className="flex items-center gap-1.5 hover:text-blue-600 transition">
+                    <div className="flex items-center gap-1.5 transition" style={{ color: theme.primary }}>
                         <MapPin className="w-4 h-4" />
                         <span>{data.personalInfo.location}</span>
                     </div>
