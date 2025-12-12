@@ -1,7 +1,19 @@
 
-// Use proxy in development to avoid CORS issues, direct URL in production
-const PAYMENT_WEBHOOK_URL = import.meta.env.VITE_PAYMENT_WEBHOOK_URL;
+// Use direct URL from environment variable for all environments
+// This ensures consistent behavior in both development and production
+const PAYMENT_WEBHOOK_URL_ENV = import.meta.env.VITE_PAYMENT_WEBHOOK_URL || '';
 const PAYMENT_API_KEY = import.meta.env.VITE_PAYMENT_API_KEY || '';
+
+// Clean the webhook URL - remove any trailing slashes
+// The URL must be a complete URL (starts with http:// or https://)
+const PAYMENT_WEBHOOK_URL = PAYMENT_WEBHOOK_URL_ENV.trim().replace(/\/+$/, '');
+
+// Validate that the URL is properly formatted
+if (!PAYMENT_WEBHOOK_URL) {
+  console.error('VITE_PAYMENT_WEBHOOK_URL is not set in environment variables');
+} else if (!PAYMENT_WEBHOOK_URL.startsWith('http://') && !PAYMENT_WEBHOOK_URL.startsWith('https://')) {
+  console.error('VITE_PAYMENT_WEBHOOK_URL must be a complete URL starting with http:// or https://');
+}
 export interface PaymentRequest {
   user_id: string;
   amount: number; // Amount in GNF
@@ -17,6 +29,16 @@ export interface PaymentResponse {
 
 export const processPayment = async (request: PaymentRequest): Promise<PaymentResponse> => {
   try {
+    // Validate webhook URL
+    if (!PAYMENT_WEBHOOK_URL || PAYMENT_WEBHOOK_URL.trim() === '') {
+      throw new Error('Payment webhook URL is not configured');
+    }
+
+    // Log the URL being used (for debugging) - only log in development
+    if (import.meta.env.DEV) {
+      console.log('Payment webhook URL:', PAYMENT_WEBHOOK_URL);
+    }
+
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
     };

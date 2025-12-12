@@ -11,12 +11,6 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       host: '0.0.0.0',
       proxy: {
-        '/api/payment': {
-          target: 'https://n8n.kedi-tech.com',
-          changeOrigin: true,
-          secure: true,
-          rewrite: (path) => path.replace(/^\/api\/payment/, '/webhook/ab839d73-7e7f-415e-ba8d-b40613a48551'),
-        },
         '/api/auth/updateCredit': {
           target: apiBaseUrl,
           changeOrigin: true,
