@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, FileText, Wand2, Download, Palette, Globe, Phone, CheckCircle, Sparkles } from 'lucide-react';
+import { ArrowRight, FileText, Wand2, Download, Palette, Globe, Phone, CheckCircle, Sparkles, Envelope, Mail } from 'lucide-react';
 import { Language } from '../types';
 import { TRANSLATIONS } from '../constants';
 
@@ -154,11 +154,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ lang, onGetStarted }) => {
             {t.landingSupportDesc}
           </p>
           <a
-            href={`tel:613956391`}
+            href={`mailto:contact@baracv.com`}
             className="inline-flex items-center gap-3 bg-white text-emerald-600 px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
           >
-            <Phone className="w-5 h-5" />
-            +224 613 956 391
+            <Mail className="w-5 h-5" />
+            contact@baracv.com
           </a>
         </div>
       </div>
