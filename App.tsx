@@ -850,8 +850,8 @@ const App: React.FC = () => {
                     onClick={() => { setShowAuth(true); setShowMobileMenu(false); }}
                     className="w-full bg-gray-400 text-white px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition shadow-md font-medium text-sm"
                   >
-                    {isIOS ? <Share2 size={18} /> : <Download size={18} />}
-                    {isIOS ? (lang === 'fr' ? 'Partager' : 'Share') : t.print}
+                    <Download size={18} />
+                    {t.print}
                   </button>
                 ) : (
                   <button 
@@ -870,8 +870,8 @@ const App: React.FC = () => {
                         : 'bg-gray-900 text-white hover:bg-gray-800'
                     }`}
                   >
-                    {isIOS ? <Share2 size={18} /> : <Download size={18} />}
-                    {isIOS ? (lang === 'fr' ? 'Partager' : 'Share') : t.print}
+                    <Download size={18} />
+                    {t.print}
                   </button>
                 )}
               </div>
