@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ResumePreview from './components/ResumePreview';
 import CoverLetterPreview from './components/CoverLetterPreview';
 import Editor from './components/Editor';
@@ -10,6 +10,8 @@ import { Globe, Download, FileText, User, CreditCard, LogIn, LogOut, Edit, Eye, 
 import AuthModal, { AuthUser } from './components/AuthModal';
 import CheckoutModal, { CheckoutResult } from './components/CheckoutModal';
 import { getBalance, updateCredit } from './services/authService';
+import html2pdf from 'html2pdf.js';
+import html2canvas from 'html2canvas';
 
 const App: React.FC = () => {
   const [resumeData, setResumeData] = useState<ResumeData>(INITIAL_DATA);
@@ -23,6 +25,7 @@ const App: React.FC = () => {
   const [showAuth, setShowAuth] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [pendingCheckout, setPendingCheckout] = useState(false);
+  const previewRef = useRef<HTMLDivElement>(null); // Ref for PDF generation
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -164,19 +167,237 @@ const App: React.FC = () => {
       localStorage.setItem('tp-auth-user', JSON.stringify(synced));
     }
 
-    // 1. Change document title to get a nice filename
-    const originalTitle = document.title;
+    // Generate PDF filename with person's name
     const safeName = resumeData.personalInfo.fullName.replace(/[^a-zA-Z0-9]/g, '_') || 'Document';
     const type = activeView === 'resume' ? 'Resume' : 'Cover_Letter';
-    document.title = `BaraCV_${safeName}_${type}`;
+    const filename = `BaraCV_${safeName}_${type}.pdf`;
 
-    // 2. Trigger print
-    // Use a small timeout to ensure React rendering/Title update is complete
-    setTimeout(() => {
-        window.print();
-        // 3. Restore title
-        document.title = originalTitle;
-    }, 100);
+    // Find the preview element to convert to PDF
+    // The preview is inside a div with the preview content
+    const previewElement = previewRef.current;
+    if (!previewElement) {
+      console.error('Preview element not found');
+      return;
+    }
+
+    // Find the actual resume/cover letter content (the element with width: 210mm)
+    // This should be the inner element without the zoom transform
+    let contentElement: HTMLElement | null = previewElement.querySelector('.resume-page');
+    
+    // If not found, try to find element with 210mm width (for cover letter)
+    if (!contentElement) {
+      const allElements = previewElement.querySelectorAll('*');
+      for (const el of allElements) {
+        const htmlEl = el as HTMLElement;
+        if (htmlEl.style.width && htmlEl.style.width.includes('210mm')) {
+          contentElement = htmlEl;
+          break;
+        }
+      }
+    }
+    
+    // Fallback to first child or preview element itself
+    if (!contentElement) {
+      contentElement = (previewElement.firstElementChild as HTMLElement) || previewElement;
+    }
+
+    if (!contentElement) {
+      console.error('Content element not found');
+      return;
+    }
+
+    // Temporarily remove zoom transform for PDF generation to ensure correct size
+    const originalTransform = previewElement.style.transform;
+    const originalTransformOrigin = previewElement.style.transformOrigin;
+    previewElement.style.transform = 'scale(1)';
+    previewElement.style.transformOrigin = 'top center';
+
+    // Temporarily modify content element to prevent extra blank pages
+    const originalMinHeight = contentElement.style.minHeight;
+    const originalHeight = contentElement.style.height;
+    // Remove minHeight constraint to let content size naturally
+    contentElement.style.minHeight = 'auto';
+    contentElement.style.height = 'auto';
+
+    // Hide watermark elements before PDF generation
+    // Watermarks have class "print:hidden" and contain "BaraCV Preview" text
+    const watermarkElements = contentElement.querySelectorAll('.print\\:hidden, [class*="print:hidden"]');
+    const watermarkDisplayStates: Array<{ element: HTMLElement; originalDisplay: string }> = [];
+    
+    watermarkElements.forEach((el) => {
+      const htmlEl = el as HTMLElement;
+      watermarkDisplayStates.push({
+        element: htmlEl,
+        originalDisplay: htmlEl.style.display || window.getComputedStyle(htmlEl).display
+      });
+      htmlEl.style.display = 'none';
+    });
+    
+    // Also hide any elements with opacity 0.22 (watermark styling)
+    const opacityElements = contentElement.querySelectorAll('*');
+    opacityElements.forEach((el) => {
+      const htmlEl = el as HTMLElement;
+      const computedStyle = window.getComputedStyle(htmlEl);
+      if (computedStyle.opacity === '0.22' || htmlEl.textContent?.includes('BaraCV Preview')) {
+        if (!watermarkDisplayStates.find(w => w.element === htmlEl)) {
+          watermarkDisplayStates.push({
+            element: htmlEl,
+            originalDisplay: htmlEl.style.display || computedStyle.display
+          });
+          htmlEl.style.display = 'none';
+        }
+      }
+    });
+
+    // Configure PDF options for A4 size (210mm x 297mm)
+    // Get the actual content width
+    const contentWidth = contentElement.offsetWidth || 794; // 794px = 210mm at 96 DPI
+    
+    const opt = {
+      margin: [0, 0, 0, 0],
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      enableLinks: false,
+      html2canvas: { 
+        scale: 2,
+        useCORS: true,
+        letterRendering: true,
+        logging: false,
+        width: contentWidth,
+        // Don't specify height - let it calculate from content
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
+        backgroundColor: contentElement.style.backgroundColor || '#ffffff',
+      },
+      jsPDF: { 
+        unit: 'mm', 
+        format: 'a4',
+        orientation: 'portrait',
+        compress: true,
+      },
+      pagebreak: { 
+        mode: ['avoid-all', 'css', 'legacy'],
+        before: '.page-break-before',
+        after: '.page-break-after',
+        avoid: ['img', '.no-break'],
+      },
+    };
+
+    try {
+      // Wait a bit for styles to apply
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Use html2canvas directly to generate canvas from content
+      const canvas = await html2canvas(contentElement as HTMLElement, {
+        scale: 2,
+        useCORS: true,
+        letterRendering: true,
+        logging: false,
+        width: contentWidth,
+        backgroundColor: contentElement.style.backgroundColor || '#ffffff',
+      });
+      
+      if (!canvas) {
+        throw new Error('Failed to generate canvas');
+      }
+      
+      // Now use jsPDF directly to have full control over pages
+      const { jsPDF } = await import('jspdf');
+      
+      // A4 dimensions in mm
+      const a4WidthMm = 210;
+      const a4HeightMm = 297;
+      
+      // Calculate image dimensions to fit A4 width
+      const imgWidthMm = a4WidthMm;
+      const imgHeightMm = (canvas.height / canvas.width) * a4WidthMm;
+      
+      // Calculate how many pages we actually need
+      const totalPages = Math.ceil(imgHeightMm / a4HeightMm);
+      
+      // Create PDF with first page
+      const pdf = new jsPDF({
+        unit: 'mm',
+        format: 'a4',
+        orientation: 'portrait',
+        compress: true,
+      });
+      
+      // Add content page by page, cropping each page's content
+      for (let i = 0; i < totalPages; i++) {
+        if (i > 0) {
+          pdf.addPage();
+        }
+        
+        // Calculate the source rectangle for this page
+        const sourceY = i * a4HeightMm * (canvas.width / imgWidthMm);
+        const sourceHeight = Math.min(
+          a4HeightMm * (canvas.width / imgWidthMm),
+          canvas.height - sourceY
+        );
+        
+        // Only add if there's content for this page
+        if (sourceHeight > 0 && sourceY < canvas.height) {
+          // Create a cropped canvas for this page
+          const pageCanvas = document.createElement('canvas');
+          pageCanvas.width = canvas.width;
+          pageCanvas.height = Math.ceil(sourceHeight);
+          const ctx = pageCanvas.getContext('2d');
+          
+          if (ctx) {
+            // Fill with background color first
+            ctx.fillStyle = contentElement.style.backgroundColor || '#ffffff';
+            ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+            
+            // Draw only the portion of the image for this page
+            ctx.drawImage(
+              canvas,
+              0, sourceY,
+              canvas.width, sourceHeight,
+              0, 0,
+              canvas.width, sourceHeight
+            );
+            
+            // Calculate the height in mm for this page (should be <= a4HeightMm)
+            const pageHeightMm = Math.min(
+              (sourceHeight / canvas.width) * imgWidthMm,
+              a4HeightMm
+            );
+            
+            // Add this page's cropped content to PDF at position 0,0
+            pdf.addImage(
+              pageCanvas.toDataURL('image/jpeg', 0.98),
+              'JPEG',
+              0,
+              0,
+              imgWidthMm,
+              pageHeightMm
+            );
+          }
+        }
+      }
+      
+      // Save the PDF
+      pdf.save(filename);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      // Restore original transform and transform origin
+      previewElement.style.transform = originalTransform;
+      previewElement.style.transformOrigin = originalTransformOrigin;
+      
+      // Restore content element styles
+      contentElement.style.minHeight = originalMinHeight;
+      contentElement.style.height = originalHeight;
+      
+      // Restore watermark visibility
+      watermarkDisplayStates.forEach(({ element, originalDisplay }) => {
+        element.style.display = originalDisplay;
+      });
+    }
   };
 
   const toggleLanguage = () => {
@@ -587,6 +808,7 @@ const App: React.FC = () => {
             In print mode, we remove scaling, margins, and transforms to let it flow naturally as a page 
           */}
           <div 
+            ref={previewRef}
             className="origin-top transition-transform duration-200 print:scale-100 print:transform-none print:m-0 print:p-0 print:w-full preview-zoom-mobile md:scale-90 lg:scale-100 xl:scale-100"
             style={{
               transform: `scale(${previewZoom})`,

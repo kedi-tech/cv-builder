@@ -11,6 +11,9 @@
   "dependencies": {
     "@clerk/nextjs": "^6.36.2",
     "@google/genai": "^1.30.0",
+    "html2canvas": "^1.4.1",
+    "html2pdf.js": "^0.12.1",
+    "jspdf": "^3.0.4",
     "lucide-react": "^0.555.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -18,6 +21,7 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "@types/html2pdf.js": "^0.10.0",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
     "typescript": "~5.8.2",
