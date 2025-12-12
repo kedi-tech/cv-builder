@@ -465,6 +465,7 @@ const App: React.FC = () => {
         }
       } else {
         // Non-iOS devices: use standard download approach
+        // For Android, we need to trigger download synchronously from user gesture
         try {
           const pdfBlob = pdf.output('blob');
           const url = URL.createObjectURL(pdfBlob);
@@ -476,8 +477,13 @@ const App: React.FC = () => {
           link.style.display = 'none';
           link.setAttribute('download', filename);
           
-          // Append to body
+          // Append to body immediately
           document.body.appendChild(link);
+          
+          // For Android, trigger download immediately and synchronously
+          // Don't use requestAnimationFrame or Promise - trigger directly to maintain user gesture context
+          // Force a synchronous reflow to ensure the link is in the DOM
+          link.offsetHeight; // Force reflow
           
           // Trigger download immediately (synchronous within user interaction)
           link.click();
@@ -488,11 +494,16 @@ const App: React.FC = () => {
               document.body.removeChild(link);
             }
             URL.revokeObjectURL(url);
-          }, 200);
+          }, 100);
         } catch (error) {
           // Fallback to direct save method
           console.warn('Blob download failed, trying direct save:', error);
-          pdf.save(filename);
+          try {
+            pdf.save(filename);
+          } catch (saveError) {
+            console.error('Direct save also failed:', saveError);
+            alert('Failed to download PDF. Please try again.');
+          }
         }
       }
     } catch (error) {
