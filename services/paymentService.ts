@@ -1,6 +1,6 @@
 
 // Use proxy in development to avoid CORS issues, direct URL in production
-const PAYMENT_WEBHOOK_URL = import.meta.env.VITE_PAYMENT_WEBHOOK_URL || 'https://n8n.kedi-tech.com/webhook/ab839d73-7e7f-415e-ba8d-b40613a48551';
+const PAYMENT_WEBHOOK_URL = import.meta.env.VITE_PAYMENT_WEBHOOK_URL;
 const PAYMENT_API_KEY = import.meta.env.VITE_PAYMENT_API_KEY || '';
 export interface PaymentRequest {
   user_id: string;
