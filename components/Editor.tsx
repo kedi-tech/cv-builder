@@ -321,14 +321,14 @@ const Editor: React.FC<EditorProps> = ({ data, onChange, lang, activeView, setAc
                  <div className="flex justify-between items-center mb-1">
                     <label className="text-xs text-gray-500">{t.description}</label>
                     {hasCredits ? (
-                      <button 
-                        onClick={() => handleImproveDescription(index)}
-                        disabled={isGenerating}
-                        className="text-xs flex items-center gap-1 text-emerald-600 hover:text-emerald-800 disabled:opacity-50"
+                    <button 
+                      onClick={() => handleImproveDescription(index)}
+                      disabled={isGenerating}
+                      className="text-xs flex items-center gap-1 text-emerald-600 hover:text-emerald-800 disabled:opacity-50"
                         title={t.enhanceTooltip || `${t.enhance} (1 ${t.credits?.toLowerCase() || 'credit'})`}
-                      >
-                        <Wand2 size={12} /> {isGenerating ? t.enhancing : t.enhance}
-                      </button>
+                    >
+                      <Wand2 size={12} /> {isGenerating ? t.enhancing : t.enhance}
+                    </button>
                     ) : (
                       <button 
                         onClick={onUpgrade}
@@ -772,14 +772,14 @@ const Editor: React.FC<EditorProps> = ({ data, onChange, lang, activeView, setAc
                     <div className="flex justify-between items-center mb-1">
                         <label className="block text-xs font-medium text-gray-500">{t.summary}</label>
                         {hasCredits ? (
-                          <button 
-                            onClick={handleAISummary}
-                            disabled={isGenerating}
-                            className="text-xs flex items-center gap-1 text-emerald-600 hover:text-emerald-800 disabled:opacity-50"
+                        <button 
+                        onClick={handleAISummary}
+                        disabled={isGenerating}
+                        className="text-xs flex items-center gap-1 text-emerald-600 hover:text-emerald-800 disabled:opacity-50"
                             title={t.autoWriteTooltip || `${t.autoWrite} (1 ${t.credits?.toLowerCase() || 'credit'})`}
-                          >
-                            <Wand2 size={12} /> {isGenerating ? t.writing : t.autoWrite}
-                          </button>
+                        >
+                        <Wand2 size={12} /> {isGenerating ? t.writing : t.autoWrite}
+                        </button>
                         ) : (
                           <button 
                             onClick={onUpgrade}
@@ -878,14 +878,14 @@ const Editor: React.FC<EditorProps> = ({ data, onChange, lang, activeView, setAc
                 <div className="flex justify-between items-center mb-2">
                     <label className="block text-xs font-medium text-gray-500">{t.coverLetterBody}</label>
                     {hasCredits ? (
-                      <button 
-                        onClick={handleAICoverLetter}
-                        disabled={isGenerating}
-                        className="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-emerald-700 disabled:opacity-50 transition shadow-sm"
+                    <button 
+                      onClick={handleAICoverLetter}
+                      disabled={isGenerating}
+                      className="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-emerald-700 disabled:opacity-50 transition shadow-sm"
                         title={t.generateCoverLetterTooltip || `${t.generateCoverLetter} (1 credit)`}
-                      >
-                        <Sparkles size={12} /> {isGenerating ? t.generating : t.generateCoverLetter}
-                      </button>
+                    >
+                      <Sparkles size={12} /> {isGenerating ? t.generating : t.generateCoverLetter}
+                    </button>
                     ) : (
                       <button 
                         onClick={onUpgrade}

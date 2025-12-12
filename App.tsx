@@ -25,6 +25,8 @@ const App: React.FC = () => {
   const [showAuth, setShowAuth] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [pendingCheckout, setPendingCheckout] = useState(false);
+  const [showIOSDownloadHelp, setShowIOSDownloadHelp] = useState(false);
+  const [pendingIOSShare, setPendingIOSShare] = useState<{ blob: Blob; filename: string } | null>(null);
   const previewRef = useRef<HTMLDivElement>(null); // Ref for PDF generation
 
   useEffect(() => {
@@ -137,20 +139,12 @@ const App: React.FC = () => {
     };
   }, [user?.id, user?.token]); // Re-run when user or token changes
 
-  const handlePrint = async () => {
-    if (!user) {
-      setShowAuth(true);
-      return;
-    }
+  // Function to generate and download PDF (extracted for reuse)
+  const generateAndDownloadPDF = async () => {
+    if (!user) return;
 
     // Calculate required credits: 2 for both resume and cover letter
     const requiredCredits = 2;
-
-    // Check if user has enough credits
-    if ((user.credits || 0) < requiredCredits) {
-      setShowCheckout(true);
-      return;
-    }
 
     // Deduct credits locally first
     const remainingCredits = (user.credits || 0) - requiredCredits;
@@ -379,8 +373,128 @@ const App: React.FC = () => {
         }
       }
       
-      // Save the PDF
-      pdf.save(filename);
+      // Save the PDF - iOS requires special handling
+      // Detect iOS devices
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      
+      if (isIOS) {
+        // iOS Safari - use Web Share API with direct file link approach
+        try {
+          const pdfBlob = pdf.output('blob');
+          const url = URL.createObjectURL(pdfBlob);
+          
+          // Create file with proper MIME type for Web Share API
+          const file = new File([pdfBlob], filename, { 
+            type: 'application/pdf',
+            lastModified: Date.now()
+          });
+          
+          // Try Web Share API first (preferred method)
+          if (navigator.share) {
+            try {
+              // Check if we can share files
+              let canShareFiles = false;
+              if (navigator.canShare) {
+                try {
+                  canShareFiles = navigator.canShare({ files: [file] });
+                } catch (e) {
+                  // canShare might throw, try anyway
+                }
+              }
+              
+              if (canShareFiles) {
+                await navigator.share({
+                  title: filename,
+                  files: [file],
+                });
+                URL.revokeObjectURL(url);
+                return; // Successfully shared
+              }
+            } catch (shareError: any) {
+              if (shareError.name === 'AbortError' || shareError.name === 'NotAllowedError') {
+                // User cancelled
+                URL.revokeObjectURL(url);
+                return;
+              }
+              console.log('Web Share API failed, using direct link method:', shareError);
+            }
+          }
+          
+          // Fallback: Use direct file link with hidden <a> tag
+          // This triggers the browser's share menu on iOS
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = filename; // iOS ignores this but it's good practice
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          
+          // Click the link - this will open the PDF and user can use browser's share button
+          link.click();
+          
+          // Clean up after a delay
+          setTimeout(() => {
+            if (document.body.contains(link)) {
+              document.body.removeChild(link);
+            }
+            URL.revokeObjectURL(url);
+          }, 1000);
+          
+        } catch (error: any) {
+          console.error('iOS PDF share failed:', error);
+          // Final fallback: try to open blob URL directly
+          try {
+            const pdfBlob = pdf.output('blob');
+            const url = URL.createObjectURL(pdfBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            setTimeout(() => {
+              if (document.body.contains(link)) {
+                document.body.removeChild(link);
+              }
+              URL.revokeObjectURL(url);
+            }, 1000);
+          } catch (blobError) {
+            console.error('All iOS methods failed:', blobError);
+            alert('Unable to share PDF on iOS. Please try using a different browser or device.');
+          }
+        }
+      } else {
+        // Non-iOS devices: use standard download approach
+        try {
+          const pdfBlob = pdf.output('blob');
+          const url = URL.createObjectURL(pdfBlob);
+          
+          // Create a temporary link element for download
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = filename;
+          link.style.display = 'none';
+          link.setAttribute('download', filename);
+          
+          // Append to body
+          document.body.appendChild(link);
+          
+          // Trigger download immediately (synchronous within user interaction)
+          link.click();
+          
+          // Clean up after a short delay
+          setTimeout(() => {
+            if (document.body.contains(link)) {
+              document.body.removeChild(link);
+            }
+            URL.revokeObjectURL(url);
+          }, 200);
+        } catch (error) {
+          // Fallback to direct save method
+          console.warn('Blob download failed, trying direct save:', error);
+          pdf.save(filename);
+        }
+      }
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');
@@ -398,6 +512,43 @@ const App: React.FC = () => {
         element.style.display = originalDisplay;
       });
     }
+  };
+
+  const handlePrint = async () => {
+    if (!user) {
+      setShowAuth(true);
+      return;
+    }
+
+    // Calculate required credits: 2 for both resume and cover letter
+    const requiredCredits = 2;
+
+    // Check if user has enough credits
+    if ((user.credits || 0) < requiredCredits) {
+      setShowCheckout(true);
+      return;
+    }
+
+    // Detect iOS devices
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    // On iOS, generate PDF and open share sheet directly
+    if (isIOS) {
+      // Switch to preview tab first if currently on editor tab
+      if (activeTab === 'editor') {
+        setActiveTab('preview');
+        // Wait for preview to render
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+      
+      // Generate PDF and share directly (no modal)
+      await generateAndDownloadPDF();
+      return;
+    }
+
+    // For non-iOS devices, proceed directly with PDF generation
+    await generateAndDownloadPDF();
   };
 
   const toggleLanguage = () => {
@@ -476,6 +627,12 @@ const App: React.FC = () => {
 
   const t = TRANSLATIONS[lang];
   const hasPro = user?.plan === 'pro';
+  
+  // Detect iOS devices for UI customization
+  const isIOS = typeof window !== 'undefined' && (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  );
   const userCredits = user?.credits || 0;
   // Calculate required credits: 2 for both resume and cover letter
   const requiredCredits = 2;
@@ -693,8 +850,8 @@ const App: React.FC = () => {
                     onClick={() => { setShowAuth(true); setShowMobileMenu(false); }}
                     className="w-full bg-gray-400 text-white px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition shadow-md font-medium text-sm"
                   >
-                    <Download size={18} />
-                    {t.print}
+                    {isIOS ? <Share2 size={18} /> : <Download size={18} />}
+                    {isIOS ? (lang === 'fr' ? 'Partager' : 'Share') : t.print}
                   </button>
                 ) : (
                   <button 
@@ -713,8 +870,8 @@ const App: React.FC = () => {
                         : 'bg-gray-900 text-white hover:bg-gray-800'
                     }`}
                   >
-                    <Download size={18} />
-                    {t.print}
+                    {isIOS ? <Share2 size={18} /> : <Download size={18} />}
+                    {isIOS ? (lang === 'fr' ? 'Partager' : 'Share') : t.print}
                   </button>
                 )}
               </div>
@@ -836,6 +993,101 @@ const App: React.FC = () => {
         onClose={() => setShowCheckout(false)}
         onComplete={handleCheckoutComplete}
       />
+      
+      {/* iOS Download Help Modal */}
+      {showIOSDownloadHelp && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">
+              {lang === 'fr' ? 'Enregistrer votre PDF' : 'Save Your PDF'}
+            </h3>
+            <div className="space-y-4 text-gray-700">
+              <p className="text-sm font-medium">
+                {lang === 'fr' 
+                  ? 'Cliquez sur "Continuer" pour ouvrir le menu de partage iOS. Sélectionnez "Enregistrer dans Fichiers" pour accéder à l\'application Fichiers et sauvegarder votre PDF.' 
+                  : 'Click "Continue" to open the iOS share menu. Select "Save to Files" to access the Files app and save your PDF.'}
+              </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
+                <p className="text-blue-800 font-semibold mb-2 flex items-center gap-2">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#007AFF"/>
+                    <path d="M2 17L12 22L22 17" stroke="#007AFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M2 12L12 17L22 12" stroke="#007AFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  {lang === 'fr' ? 'Étapes:' : 'Steps:'}
+                </p>
+                <ol className="list-decimal list-inside space-y-2 text-blue-700">
+                  <li>{lang === 'fr' ? 'Cliquez sur "Continuer" ci-dessous' : 'Click "Continue" below'}</li>
+                  <li>{lang === 'fr' ? 'Le menu de partage iOS s\'ouvrira automatiquement' : 'The iOS share menu will open automatically'}</li>
+                  <li>{lang === 'fr' ? 'Sélectionnez "Enregistrer dans Fichiers"' : 'Select "Save to Files"'}</li>
+                  <li>{lang === 'fr' ? 'L\'application Fichiers s\'ouvrira - choisissez l\'emplacement et enregistrez' : 'The Files app will open - choose location and save'}</li>
+                </ol>
+              </div>
+            </div>
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => setShowIOSDownloadHelp(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-300 transition"
+              >
+                {lang === 'fr' ? 'Annuler' : 'Cancel'}
+              </button>
+              <button
+                onClick={async () => {
+                  if (!pendingIOSShare) {
+                    setShowIOSDownloadHelp(false);
+                    await generateAndDownloadPDF();
+                    return;
+                  }
+
+                  setShowIOSDownloadHelp(false);
+                  
+                  // Immediately call share from user interaction
+                  try {
+                    const file = new File([pendingIOSShare.blob], pendingIOSShare.filename, { 
+                      type: 'application/pdf',
+                      lastModified: Date.now()
+                    });
+
+                    if (navigator.share) {
+                      // Try to share the file
+                      try {
+                        await navigator.share({
+                          title: pendingIOSShare.filename,
+                          files: [file],
+                        });
+                        setPendingIOSShare(null);
+                        return;
+                      } catch (shareError: any) {
+                        if (shareError.name === 'AbortError' || shareError.name === 'NotAllowedError') {
+                          setPendingIOSShare(null);
+                          return;
+                        }
+                        console.log('Share with files failed, trying blob URL:', shareError);
+                      }
+                    }
+                    
+                    // Fallback: open blob URL
+                    const url = URL.createObjectURL(pendingIOSShare.blob);
+                    const newWindow = window.open(url, '_blank');
+                    if (!newWindow || newWindow.closed) {
+                      window.location.href = url;
+                    } else {
+                      setTimeout(() => URL.revokeObjectURL(url), 1000);
+                    }
+                    setPendingIOSShare(null);
+                  } catch (error) {
+                    console.error('Failed to share PDF:', error);
+                    setPendingIOSShare(null);
+                  }
+                }}
+                className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition"
+              >
+                {lang === 'fr' ? 'Continuer' : 'Continue'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

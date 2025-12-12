@@ -154,11 +154,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ lang, onGetStarted }) => {
             {t.landingSupportDesc}
           </p>
           <a
-            href={`mailto:contact@baracv.com`}
+            href={`mailto:contact@kedi-tech.com`}
             className="inline-flex items-center gap-3 bg-white text-emerald-600 px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
           >
             <Mail className="w-5 h-5" />
-            contact@baracv.com
+            contact@kedi-tech.com
           </a>
         </div>
       </div>

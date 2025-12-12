@@ -34,9 +34,9 @@ export interface LoginRequest {
 export interface AuthResponse {
   success: boolean;
   user?: {
-    id: string;
-    name: string;
-    email: string;
+  id: string;
+  name: string;
+  email: string;
     credits?: number;
     plan?: 'free' | 'pro';
   };
@@ -240,7 +240,7 @@ export interface UpdateCreditResponse {
   success: boolean;
   message?: string;
   balance?: number;
-}
+  }
 
 export const updateCredit = async (userId: string, remainingCredit: number): Promise<UpdateCreditResponse> => {
   try {
@@ -275,8 +275,8 @@ export const updateCredit = async (userId: string, remainingCredit: number): Pro
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       'x-api-key': apiKey,
-    };
-    
+};
+
     // Add authorization header if token exists (backend requires it)
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
@@ -324,7 +324,7 @@ export const updateCredit = async (userId: string, remainingCredit: number): Pro
         headers,
         body: bodyString,
       });
-      
+
       // Log response status for debugging
       console.log('Response status:', response.status, response.statusText);
     } catch (fetchError) {
